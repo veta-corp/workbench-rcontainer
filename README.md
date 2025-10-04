@@ -28,6 +28,14 @@ Google's official R containers are often highly inconsistent in terms of updates
       ```
       This will not output any logs and will create a more compact image suitable for use on Vertex AI Workbench.
 
+5. Push the deployment image to Google Artifact Registry:
+   ```
+   make push-deploy
+   ```
+    Ensure you have set up `gcloud` and created an Artifact Registry repository first. You will be prompted to confirm before the push proceeds.
+6. In Vertex AI Workbench, create a new notebook instance and select "Custom Container". Provide the URL of your pushed image in Artifact Registry.
+
+
 ## Notes:
 - This image is based on a plain ubuntu:22.04 base image, and installs only the libraries and tools required for R data analysis and integration with Workbench.
 - A set of Dockerfiles marked as `.old` are included for reference; these are versions of the container based on Google's official data analysis containers. However, these are not really suitable for R-focused workflows (they are highly Python-centric, include gigabytes of Python data science tools, and have very old versions of R and R packages).

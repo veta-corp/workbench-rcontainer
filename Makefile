@@ -1,4 +1,7 @@
 TAG ?= debug
+PROJECT ?= veta-bunseki
+REPO ?= veta-workbench-images
+ARTIFACT_REGISTRY_LOCATION ?= asia-northeast1
 
 # Colours
 BOLD  := $(shell tput bold)
@@ -39,3 +42,23 @@ test:
 	@echo "$(BOLD)   ####   Testing R capabilities. Ensure all required functionality is present:$(RESET)"
 	@docker run --rm veta-r-notebook:$(TAG) R -q -e "capabilities()"
 	@echo "$(BOLD)#######   Tests complete.$(RESET)"
+
+push-deploy:
+	@echo "$(BOLD)#######   Preparing to push deploy image to Google Cloud Platform...$(RESET)"
+	@echo "$(BOLD)   ####   Ensure you have set up $(DIM)gcloud$(RESET) and created an Artifact Registry repo first.$(RESET)"
+	@echo "$(BOLD)   ####   Deployment details:$(RESET)"
+	@echo "$(BOLD)   ####     PROJECT=$(DIM)$(PROJECT)$(RESET)"
+	@echo "$(BOLD)   ####     REPO=$(DIM)$(REPO)$(RESET)"
+	@echo "$(BOLD)   ####     ARTIFACT_REGISTRY_LOCATION=$(DIM)$(ARTIFACT_REGISTRY_LOCATION)$(RESET)"
+	@echo "$(BOLD)   ####   You may be prompted to authenticate with GCP.$(RESET)"
+	@read -p "$(BOLD)   ####   Do you wish to proceed? (y/n) $(RESET) " ans; \
+	if [ "$$ans" != "y" ]; then \
+		echo "Aborted."; exit 1; \
+	fi
+	# Actually do the push. Note that this is all one long command (; \ on each line) so DATE doesn't fall out of scope.
+	@DATE=$$(date +%y%m%d); \
+	docker tag veta-r-notebook:deploy $(ARTIFACT_REGISTRY_LOCATION)-docker.pkg.dev/$(PROJECT)/$(REPO)/veta-r-notebook:latest; \
+	docker tag veta-r-notebook:deploy $(ARTIFACT_REGISTRY_LOCATION)-docker.pkg.dev/$(PROJECT)/$(REPO)/veta-r-notebook:$$DATE; \
+	docker push $(ARTIFACT_REGISTRY_LOCATION)-docker.pkg.dev/$(PROJECT)/$(REPO)/veta-r-notebook:latest; \
+	docker push $(ARTIFACT_REGISTRY_LOCATION)-docker.pkg.dev/$(PROJECT)/$(REPO)/veta-r-notebook:$$DATE
+	@echo "$(BOLD)#######   Push complete.$(RESET)"

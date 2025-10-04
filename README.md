@@ -28,6 +28,11 @@ Google's official R containers are often highly inconsistent in terms of updates
       ```
       This will not output any logs and will create a more compact image suitable for use on Vertex AI Workbench.
 
+## Notes:
+- This image is based on a plain ubuntu:22.04 base image, and installs only the libraries and tools required for R data analysis and integration with Workbench.
+- A set of Dockerfiles marked as `.old` are included for reference; these are versions of the container based on Google's official data analysis containers. However, these are not really suitable for R-focused workflows (they are highly Python-centric, include gigabytes of Python data science tools, and have very old versions of R and R packages).
+- While the images built with this repository are intended for use with Vertex AI Workbench, they can also be used in other environments - you could run them locally with Docker and connect to them to get a ready-rolled R data science notebook environment, if you like. This could be useful if you're struggling with the mess of dependencies that R packages often have.
+
 ## Package Manifest
 
 Here is the current list of R packages included in the container:

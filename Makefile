@@ -1,4 +1,4 @@
-TAG ?= slim
+TAG ?= debug
 
 # Colours
 BOLD  := $(shell tput bold)
@@ -6,6 +6,7 @@ DIM   := $(shell tput dim)
 RESET := $(shell tput sgr0)
 
 build-debug:
+	@echo "$(BOLD)#######   Building DEBUG image...$(RESET)"
 	docker buildx build --platform=linux/amd64 -f Dockerfile.debug -t veta-r-notebook:debug .
 	# Copy all logs from the R install process to the local filesystem
 	rm -rf logs || true
@@ -16,24 +17,14 @@ build-debug:
 	grep -H "ERROR" logs/*.log || true
 	@echo "$(BOLD)#######   Last 50 successful installs...$(RESET)"
 	grep "DONE" logs/*.log | tail -50
+	@echo "$(BOLD)#######   Debug build complete. You can test it with $(DIM)make test TAG=debug$(RESET)"
 
 build-deploy:
+	@echo "$(BOLD)#######   Building DEPLOY image...$(RESET)"
 	# Remove old logs to remove confusion; this run won't generate any.
 	rm -rf logs || true
 	docker buildx build --platform=linux/amd64 -f Dockerfile.deploy -t veta-r-notebook:deploy .
-
-build-slim:
-	@echo "$(BOLD)#######   Building experimental slim image...$(RESET)"
-	docker buildx build --platform=linux/amd64 -f Dockerfile.slim -t veta-r-notebook:slim .
-	# Copy all logs from the R install process to the local filesystem
-	rm -rf logs || true
-	mkdir -p logs
-	docker run --rm veta-r-notebook:slim sh -c "cd /tmp && tar -cf - *.log" | tar -C logs -xvf -
-	# Search logs locally for errors
-	@echo "$(BOLD)#######   Checking for R package install errors...$(RESET)"
-	grep -H "ERROR" logs/*.log || true
-	@echo "$(BOLD)#######   Last 50 successful installs...$(RESET)"
-	grep "DONE" logs/*.log | tail -50
+	@echo "$(BOLD)#######   Deploy build complete. You can test it with $(DIM)make test TAG=deploy$(RESET)"
 
 test:
 	@echo "$(BOLD)#######   Running tests on veta-r-notebook:$(TAG) :: Specify TAG=debug, TAG=deploy etc. to test other builds.$(RESET)"

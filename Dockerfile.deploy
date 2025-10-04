@@ -1,28 +1,43 @@
-FROM gcr.io/deeplearning-platform-release/base-cpu
+FROM ubuntu:22.04
 
 # Environment Variables
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
 
-# Install latest version of R from CRAN; install system dependencies
+# Install system libs & dependencies for Jupyter, Python, and latest R
 COPY system-libs.txt /tmp/system-libs.txt
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common dirmngr gnupg apt-transport-https ca-certificates && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
-    add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" && \
+    apt-get install -y --no-install-recommends \
+    software-properties-common dirmngr gnupg apt-transport-https ca-certificates curl \
+    python3 python3-pip && \
+    apt-get install -y --no-install-recommends $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt) && \
+    curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor -o /usr/share/keyrings/cran-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" \
+        > /etc/apt/sources.list.d/cran-r.list && \
     apt-get update && \
-    apt-get install -y --no-install-recommends r-base r-base-dev $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt) && \
-    rm -rf /var/lib/apt/lists/* /tmp/downloaded_packages /tmp/*.rds /tmp/system-libs.txt
+    apt-get install -y r-base r-base-dev && \
+    rm -rf /var/lib/apt/lists/* /tmp/downloaded_packages /tmp/*.rds && \
+    apt-get clean
 
-# Install IRkernel so R appears in Jupyter. (Also set to Posit Package Manager for precompiled binaries.)
-RUN echo 'options(repos = c(RSPM = "https://packagemanager.posit.co/cran/latest"))' >> /usr/lib/R/etc/Rprofile.site && \
-    R -e "install.packages('IRkernel'); IRkernel::installspec(user = FALSE)"
+# Install Jupyter
+RUN pip3 install --no-cache-dir jupyterlab notebook
 
-# Install required packages from manifest. Adjust Ncpus to the number of cores to use.
+# Install required IRkernel and R packages from manifest.
 COPY packages.txt /tmp/packages.txt
 COPY install_packages.R /tmp/install_packages.R
-RUN Rscript /tmp/install_packages.R && \
+RUN echo 'options(repos = c(RSPM = "https://packagemanager.posit.co/cran/latest"))' >> /usr/lib/R/etc/Rprofile.site && \
+    R -e "install.packages('IRkernel'); IRkernel::installspec(user = FALSE)" && \
+    Rscript /tmp/install_packages.R && \
     rm -rf /tmp/* && mkdir -p /tmp && chmod 1777 /tmp
 
-# Switch to a non-root user for runtime (the `jupyter` user is specified in Google's base image)
-USER jupyter
+# Create and switch to a non-root user for runtime.
+ARG NB_USER=jupyter
+ARG NB_UID=1000
+RUN useradd -m -s /bin/bash -u $NB_UID $NB_USER && \
+    chown -R $NB_USER:$NB_USER /home/$NB_USER
+USER $NB_USER
+ENV R_LIBS_USER=/home/jupyter/R/x86_64-pc-linux-gnu-library/%V
+
+# Workbench expects jupyter to be the entrypoint
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080", "--no-browser"]

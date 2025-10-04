@@ -1,0 +1,28 @@
+FROM gcr.io/deeplearning-platform-release/base-cpu
+
+# Environment Variables
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+# Install latest version of R from CRAN; install system dependencies
+COPY system-libs.txt /tmp/system-libs.txt
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common dirmngr gnupg apt-transport-https ca-certificates && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
+    add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends r-base r-base-dev $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt) && \
+    rm -rf /var/lib/apt/lists/* /tmp/downloaded_packages /tmp/*.rds /tmp/system-libs.txt
+
+# Install IRkernel so R appears in Jupyter. (Also set to Posit Package Manager for precompiled binaries.)
+RUN echo 'options(repos = c(RSPM = "https://packagemanager.posit.co/cran/latest"))' >> /usr/lib/R/etc/Rprofile.site && \
+    R -e "install.packages('IRkernel'); IRkernel::installspec(user = FALSE)"
+
+# Install required packages from manifest. Adjust Ncpus to the number of cores to use.
+COPY packages.txt /tmp/packages.txt
+COPY install_packages.R /tmp/install_packages.R
+RUN Rscript /tmp/install_packages.R && \
+    rm -rf /tmp/* && mkdir -p /tmp && chmod 1777 /tmp
+
+# Switch to a non-root user for runtime (the `jupyter` user is specified in Google's base image)
+USER jupyter

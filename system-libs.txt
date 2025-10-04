@@ -1,24 +1,35 @@
+# Core build tools
+build-essential
+g++ 
+cmake
+gfortran
+
+# Core runtime / system libraries
+libglib2.0-dev
+zlib1g-dev
+
+# Math / linear algebra libraries
+libblas-dev
+liblapack-dev
+libomp-dev
+
+# Networking / SSL / XML libraries
 libcurl4-openssl-dev
 libssl-dev
 libxml2-dev
+libicu-dev
+
+# Image processing / graphics libraries
 libfontconfig1-dev
 libfreetype6-dev
 libpng-dev
 libtiff5-dev
 libjpeg-dev
-libblas-dev
-liblapack-dev
-gfortran
-build-essential
-g++ 
-cmake
-libboost-all-dev
-libomp-dev
-libharfbuzz-dev
-libfribidi-dev
+libwebp-dev
 libcairo2-dev
 libpango1.0-dev
-libicu-dev
-libglib2.0-dev
-zlib1g-dev
-libwebp-dev
+libharfbuzz-dev
+libfribidi-dev
+
+# Boost libraries (heavy C++ dependency)
+libboost-all-dev

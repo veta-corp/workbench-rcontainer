@@ -11,7 +11,7 @@ RUN apt-get update && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 && \
     add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/" && \
     apt-get update && \
-    apt-get install -y --no-install-recommends r-base r-base-dev $(xargs < /tmp/system-libs.txt) && \
+    apt-get install -y --no-install-recommends r-base r-base-dev $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt) && \
     rm -rf /var/lib/apt/lists/* /tmp/downloaded_packages /tmp/*.rds /tmp/system-libs.txt
 
 # Install IRkernel so R appears in Jupyter. (Also set to Posit Package Manager for precompiled binaries.)

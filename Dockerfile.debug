@@ -19,7 +19,8 @@ RUN apt-get update && \
 # Install system dependencies
 COPY system-libs.txt /tmp/system-libs.txt
 RUN apt-get update && \
-    xargs -a /tmp/system-libs.txt apt-get install -y --no-install-recommends && \
+    grep -vE '^\s*#' /tmp/system-libs.txt | grep -vE '^\s*$' | \
+    xargs apt-get install -y --no-install-recommends && \
     rm -rf /var/lib/apt/lists/* /tmp/system-libs.txt /tmp/downloaded_packages /tmp/*.rds
 
 # Set to use Posit Package Manager (many packages precompiled, so much faster than CRAN)

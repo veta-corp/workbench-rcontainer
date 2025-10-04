@@ -1,10 +1,18 @@
+# VETA Corp R Data Science Container v.1.0
+# R Package Manifest :: October 4, 2025
+
+# Core data processing packages
 tidyverse
 data.table
 lubridate
+
+# Visualisation / graphing
 ggplot2
 patchwork
 ggthemes
 ggrepel
+
+# Causal inference / econometrics
 estimatr
 fixest
 Synth
@@ -13,16 +21,22 @@ gsynth
 grf
 rdrobust
 MatchIt
+
+# Modeling / machine learning 
 glmnet
 randomForest
 ranger
 bayesplot
 rstan
 mediation
+
+# Simulation / parallel processing
 furrr
 future
 doParallel
 AlgDesign
+
+# Google Cloud Platform integration
 bigrquery
 googleCloudStorageR
 googleAuthR

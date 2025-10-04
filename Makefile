@@ -3,7 +3,7 @@ build-debug:
 	# Copy all logs from the R install process to the local filesystem
 	rm -rf logs || true
 	mkdir -p logs
-	docker run --rm veta-r-notebook:latest sh -c "cd /tmp && tar -cf - *.log" | tar -C logs -xvf -
+	docker run --rm veta-r-notebook:debug sh -c "cd /tmp && tar -cf - *.log" | tar -C logs -xvf -
 	# Search logs locally for errors
 	@echo "#######   Checking for R package install errors..."
 	grep -H "ERROR" logs/*.log || true

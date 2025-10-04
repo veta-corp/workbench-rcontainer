@@ -8,7 +8,7 @@ Google's official R containers are often highly inconsistent in terms of updates
 - Latest stable version of R (installed from CRAN).
 - Commonly used R packages for data analysis pre-installed, along with their dependencies.
 - Google Cloud / Vertex AI specific packages and integrations are included.
-- Optimised Docker image: deployment images are around 2GB so startup times are fast.
+- Optimised Docker image: deployment images compress the layers of the build process to reduce the final image size and complexity.
 - Optional testing / debugging tools: a separate Docker build process to help figure out missing dependencies if you add new packages.
 
 ## Usage
@@ -20,10 +20,56 @@ Google's official R containers are often highly inconsistent in terms of updates
       ```
       make build-debug
       ```
-      This will create a much larger image (~10GB) and will output detailed logs on the installation process of every R package to the `logs` directory, as well as showing a brief summary output to identify any installation errors.
+      This will create a larger image and will output detailed logs on the installation process of every R package to the `logs` directory, as well as showing a brief summary output to identify any installation errors.
 
     - For the final deployment image:
       ```
       make build-deploy
       ```
-      This will not output any logs and will create a much smaller image suitable for use on Vertex AI Workbench.
+      This will not output any logs and will create a more compact image suitable for use on Vertex AI Workbench.
+
+## Package Manifest
+
+Here is the current list of R packages included in the container:
+
+### Core data processing packages
+- tidyverse
+- data.table
+- lubridate
+
+### Visualisation / graphing
+- ggplot2
+- patchwork
+- ggthemes
+- ggrepel
+
+### Causal inference / econometrics
+- estimatr
+- fixest
+- Synth
+- tidysynth
+- gsynth
+- grf
+- rdrobust
+- MatchIt
+
+### Modeling / machine learning
+- glmnet
+- randomForest
+- ranger
+- bayesplot
+- rstan
+- mediation
+
+### Simulation / parallel processing
+- furrr
+- future
+- doParallel
+- AlgDesign
+
+### Google Cloud Platform integration
+- bigrquery
+- googleCloudStorageR
+- googleAuthR
+- gargle
+- DBI

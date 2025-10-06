@@ -11,11 +11,11 @@ RESET := $(shell tput sgr0)
 build-debug:
 	@echo "$(BOLD)#######   Building DEBUG image...$(RESET)"
 	docker buildx build --platform=linux/amd64 -f Dockerfile.debug -t veta-r-notebook:debug .
-	# Copy all logs from the R install process to the local filesystem
+# Copy all logs from the R install process to the local filesystem
 	rm -rf logs || true
 	mkdir -p logs
 	docker run --rm veta-r-notebook:debug sh -c "cd /tmp && tar -cf - *.log" | tar -C logs -xvf -
-	# Search logs locally for errors
+# Search logs locally for errors
 	@echo "$(BOLD)#######   Checking for R package install errors...$(RESET)"
 	grep -H "ERROR" logs/*.log || true
 	@echo "$(BOLD)#######   Last 50 successful installs...$(RESET)"
@@ -24,7 +24,7 @@ build-debug:
 
 build-deploy:
 	@echo "$(BOLD)#######   Building DEPLOY image...$(RESET)"
-	# Remove old logs to remove confusion; this run won't generate any.
+# Remove old logs to remove confusion; this run won't generate any.
 	rm -rf logs || true
 	docker buildx build --platform=linux/amd64 -f Dockerfile.deploy -t veta-r-notebook:deploy .
 	@echo "$(BOLD)#######   Deploy build complete. You can test it with $(DIM)make test TAG=deploy$(RESET)"
@@ -55,7 +55,7 @@ push-deploy:
 	if [ "$$ans" != "y" ]; then \
 		echo "Aborted."; exit 1; \
 	fi
-	# Actually do the push. Note that this is all one long command (; \ on each line) so DATE doesn't fall out of scope.
+# Actually do the push. Note that this is all one long command (; \ on each line) so DATE doesn't fall out of scope.
 	@DATE=$$(date +%y%m%d); \
 	docker tag veta-r-notebook:deploy $(ARTIFACT_REGISTRY_LOCATION)-docker.pkg.dev/$(PROJECT)/$(REPO)/veta-r-notebook:latest; \
 	docker tag veta-r-notebook:deploy $(ARTIFACT_REGISTRY_LOCATION)-docker.pkg.dev/$(PROJECT)/$(REPO)/veta-r-notebook:$$DATE; \

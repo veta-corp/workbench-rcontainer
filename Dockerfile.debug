@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM us-docker.pkg.dev/deeplearning-platform-release/gcr.io/workbench-container-slim:latest
 
 # Environment Variables
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
@@ -8,20 +8,20 @@ ENV TZ=Etc/UTC
 # TEMPORARY FOR DEBUGGING INSTALLS
 ENV R_KEEP_PKG_SOURCE=yes
 
-# Install base dependencies for Jupyter, Python, and latest R
+# Install system dependencies
+COPY system-libs.txt /tmp/system-libs.txt
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    software-properties-common dirmngr gnupg apt-transport-https ca-certificates curl \
-    python3 python3-pip && \
+    apt-get install -y --no-install-recommends $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt)
+
+# Install base dependencies for Jupyter, Python, and latest R
+RUN apt-get install -y --no-install-recommends gnupg ca-certificates curl && \
     curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor -o /usr/share/keyrings/cran-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" \
         > /etc/apt/sources.list.d/cran-r.list && \
     apt-get update && \
-    apt-get install -y r-base r-base-dev && \
-    rm -rf /tmp/downloaded_packages /tmp/*.rds
-
-# Install Jupyter
-RUN pip3 install --no-cache-dir jupyterlab notebook
+    apt-get install -y --no-install-recommends r-base r-base-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/system-libs.txt /tmp/downloaded_packages /tmp/*.rds
 
 # Set to use Posit Package Manager (many packages precompiled, so much faster than CRAN)
 RUN echo 'options(repos = c(RSPM = "https://packagemanager.posit.co/cran/latest"))' >> /usr/lib/R/etc/Rprofile.site
@@ -29,25 +29,13 @@ RUN echo 'options(repos = c(RSPM = "https://packagemanager.posit.co/cran/latest"
 # Install and set up IRkernel so R appears in Jupyter
 RUN R -e "install.packages('IRkernel'); IRkernel::installspec(user = FALSE)"
 
-# Install system dependencies
-COPY system-libs.txt /tmp/system-libs.txt
-RUN apt-get install -y --no-install-recommends $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt) && \
-    rm -rf /var/lib/apt/lists/* /tmp/system-libs.txt /tmp/downloaded_packages /tmp/*.rds && \
-    apt-get clean
-
 # Install required R packages from manifest.
 COPY packages.txt /tmp/packages.txt
 COPY install_packages.R /tmp/install_packages.R
 RUN Rscript /tmp/install_packages.R && \
     rm /tmp/packages.txt /tmp/install_packages.R
 
-# Create and switch to a non-root user for runtime.
-ARG NB_USER=jupyter
-ARG NB_UID=1000
-RUN useradd -m -s /bin/bash -u $NB_UID $NB_USER && \
-    chown -R $NB_USER:$NB_USER /home/$NB_USER
-USER $NB_USER
+# Use the preconfigured non-root user provided by the Workbench base image
+USER jupyter
+ENV HOME=/home/jupyter
 ENV R_LIBS_USER=/home/jupyter/R/x86_64-pc-linux-gnu-library/%V
-
-# Workbench expects jupyter to be the entrypoint
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080", "--no-browser"]

@@ -1,27 +1,20 @@
-FROM ubuntu:22.04
+FROM us-docker.pkg.dev/deeplearning-platform-release/gcr.io/workbench-container-slim:latest
 
 # Environment Variables
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 TZ=Etc/UTC
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
 
-# Install system libs & dependencies for Jupyter, Python, and latest R
+# Install system libs & latest R from CRAN
 COPY system-libs.txt /tmp/system-libs.txt
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    software-properties-common dirmngr gnupg apt-transport-https ca-certificates curl \
-    python3 python3-pip && \
-    apt-get install -y --no-install-recommends $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt) && \
+    apt-get install -y --no-install-recommends gnupg ca-certificates curl $(grep -vE '^\s*(#|$)' /tmp/system-libs.txt) && \
     curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor -o /usr/share/keyrings/cran-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" \
+    echo "deb [signed-by=/usr/share/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/ubuntu noble-cran40/" \
         > /etc/apt/sources.list.d/cran-r.list && \
     apt-get update && \
-    apt-get install -y r-base r-base-dev && \
+    apt-get install -y --no-install-recommends r-base r-base-dev && \
     rm -rf /var/lib/apt/lists/* /tmp/downloaded_packages /tmp/*.rds && \
     apt-get clean
-
-# Install Jupyter
-RUN pip3 install --no-cache-dir jupyterlab notebook
 
 # Install required IRkernel and R packages from manifest.
 COPY packages.txt /tmp/packages.txt
@@ -31,13 +24,7 @@ RUN echo 'options(repos = c(RSPM = "https://packagemanager.posit.co/cran/latest"
     Rscript /tmp/install_packages.R && \
     rm -rf /tmp/* && mkdir -p /tmp && chmod 1777 /tmp
 
-# Create and switch to a non-root user for runtime.
-ARG NB_USER=jupyter
-ARG NB_UID=1000
-RUN useradd -m -s /bin/bash -u $NB_UID $NB_USER && \
-    chown -R $NB_USER:$NB_USER /home/$NB_USER
-USER $NB_USER
+# Use the preconfigured non-root user provided by the Workbench base image
+USER jupyter
+ENV HOME=/home/jupyter
 ENV R_LIBS_USER=/home/jupyter/R/x86_64-pc-linux-gnu-library/%V
-
-# Workbench expects jupyter to be the entrypoint
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080", "--no-browser"]

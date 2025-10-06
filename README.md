@@ -2,7 +2,7 @@
 
 This repository contains a Dockerfile and associated configuration files to create a custom R data analysis container for use with Google Cloud's Vertex AI Workbench. The container is designed to provide a robust environment for data scientists and analysts working with R in the cloud.
 
-Google's official R containers are often highly inconsistent in terms of updates and functionality; they offer very old versions of R and some major data science packages are no longer supported on those versions. This custom container aims to provide a more reliable and up-to-date environment.
+Google's official containers are often highly inconsistent in terms of R updates and functionality; they offer outdated versions of R and lack major data science packages. This custom container aims to provide a more reliable and up-to-date environment.
 
 ## Features
 - Latest stable version of R (installed from CRAN).
@@ -33,13 +33,14 @@ Google's official R containers are often highly inconsistent in terms of updates
    make push-deploy
    ```
     Ensure you have set up `gcloud` and created an Artifact Registry repository first. You will be prompted to confirm before the push proceeds.
+    This will push the image to `:latest` as well as a versioned tag based on the current date (e.g., `:250915` for 2025/09/15).
 6. In Vertex AI Workbench, create a new notebook instance and select "Custom Container". Provide the URL of your pushed image in Artifact Registry.
 
 
 ## Notes:
-- This image is based on a plain ubuntu:22.04 base image, and installs only the libraries and tools required for R data analysis and integration with Workbench.
-- A set of Dockerfiles marked as `.old` are included for reference; these are versions of the container based on Google's official data analysis containers. However, these are not really suitable for R-focused workflows (they are highly Python-centric, include gigabytes of Python data science tools, and have very old versions of R and R packages).
-- While the images built with this repository are intended for use with Vertex AI Workbench, they can also be used in other environments - you could run them locally with Docker and connect to them to get a ready-rolled R data science notebook environment, if you like. This could be useful if you're struggling with the mess of dependencies that R packages often have.
+- This image is based on Google's `slim` base image, and installs only the libraries and tools required for R data analysis and integration with Workbench.
+- A set of Dockerfiles marked as `.old` are included for reference; these are versions of the container based on Google's full-size containers. These are much larger in size and contain a lot of Python-specific tooling that is not required for R workflows.
+- The images built with this repository are intended for use with Vertex AI Workbench; we may create more generalised versions at a later date which can be executed on local machines or other cloud service platforms to provide a pre-rolled R data science environment.
 
 ## Package Manifest
 
